@@ -1,0 +1,5 @@
+#define RGBA_GETALPHA(rgb)      ((rgb) >> 24)
+#define RGBA_GETRED(rgb)        (((rgb) >> 16) & 0xff)
+#define RGBA_GETGREEN(rgb)      (((rgb) >> 8) & 0xff)
+#define RGBA_GETBLUE(rgb)       ((rgb) & 0xff)
+#define RGBA_MAKE(r, g, b, a)   ((D3DCOLOR) (((a) << 24) | ((r) << 16) | ((g) << 8) | (b)))

@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="kgl.c" />
+    <ClCompile Include="maths.c" />
+    <ClCompile Include="asm.c" />
+    <ClCompile Include="clip.c" />
+    <ClCompile Include="invert.c" />
+    <ClCompile Include="kvb.c" />
+    <ClCompile Include="wgl.c" />
+    <ClCompile Include="rglext.c" />
+    <ClCompile Include="hash.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="kgl.h" />
+    <ClInclude Include="maths.h" />
+    <ClInclude Include="kvb.h" />
+    <ClInclude Include="rglext.h" />
+    <ClInclude Include="hash.h" />
+  </ItemGroup>
+</Project>
