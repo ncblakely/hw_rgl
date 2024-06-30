@@ -30,7 +30,6 @@ static setupFunc_t setupFunc = NULL;
 static double chop_temp;
 
 void d3d_fullscene(GLboolean on);
-static void clear_both_buffers(GLcontext* ctx);
 
 GLcontext* CTX = NULL;
 d3d_context* D3D = NULL;
@@ -389,7 +388,6 @@ GLboolean d3d_begin_scene(d3d_context* d3d)
     }
     else
     {
-        clear_both_buffers(CTX);
         d3d->inScene = GL_TRUE;
         return GL_TRUE;
     }
