@@ -72,9 +72,9 @@ GLubyte STR_EXTENSIONS[] = "xxxxxxxx GL_RGL_rgl_feature GL_EXT_rescale_normal GL
 GLubyte STR_EXTENSIONS[] = "xxxxxxxx GL_RGL_rgl_feature GL_EXT_rescale_normal GL_EXT_paletted_texture GL_EXT_shared_texture_palette GL_RGL_lit_texture_palette";
 #endif
 
-GLubyte STR_VENDOR[]     = "Relic Entertainment, Inc. [1.1a]";
+GLubyte STR_VENDOR[]     = "Relic Entertainment, Inc. [1.3a]";
 GLubyte STR_RENDERER[]   = "rgl   ";    //3 spaces
-GLubyte STR_VERSION[]    = "1.1   ";    //3 spaces
+GLubyte STR_VERSION[]    = "1.3   ";    //3 spaces
 GLubyte STR_NOTHING[]    = "[unrecognized string]";
 
 //**THE CONTEXT**  (the only context)
@@ -1532,8 +1532,11 @@ DLL void API glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
         return;
     }
 
-    width  = CLAMP(width,  1, MAX_WIDTH);
-    height = CLAMP(height, 1, MAX_HEIGHT);
+    if (width < 1)
+        width = 1;
+
+    if (height < 1)
+        height = 1;
 
     ctx->Viewport.X = x;
     ctx->Viewport.Width = width;

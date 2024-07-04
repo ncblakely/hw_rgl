@@ -16,8 +16,8 @@
 
 #include <assert.h>
 
-//initialize directdraw
-GLboolean init_window(d3d_context* d3d)
+//initialize game window
+void init_window(d3d_context* d3d)
 {
     enum_dd_devices(d3d);
 
@@ -26,7 +26,10 @@ GLboolean init_window(d3d_context* d3d)
     d3d->canGammaControl = GL_TRUE;
     d3d->hwnd = (HWND)rglCreate0();
 
-    return GL_TRUE;
+    GetClientRect(d3d->hwnd, &d3d->ScreenRect);
+    GetClientRect(d3d->hwnd, &d3d->ViewportRect);
+    ClientToScreen(d3d->hwnd, (POINT*)&d3d->ScreenRect.left);
+    ClientToScreen(d3d->hwnd, (POINT*)&d3d->ScreenRect.right);
 }
 
 GLboolean init_depthsurface(d3d_context* d3d, D3DFORMAT depthFormat)
@@ -81,47 +84,34 @@ GLint MAX_P2(GLint n)
     return 1024;
 }
 
-#if LOG_DEVICE_CAPS
 static void log_device_caps(d3d_context* d3d)
 {
-    FILE* out;
-
-    out = fopen("d3dDeviceCaps.txt", "wt");
-    if (out == NULL)
-    {
-        return;
-    }
-
-    fprintf(out, "canRenderWindowed %d\n", d3d->canRenderWindowed);
-    fprintf(out, "canGammaControl %d\n", d3d->canGammaControl);
-    fprintf(out, "maxTexAspect %d\n", d3d->maxTexAspect);
-    fprintf(out, "minTexWidth %d\n", d3d->minTexWidth);
-    fprintf(out, "maxTexWidth %d\n", d3d->maxTexWidth);
-    fprintf(out, "minTexHeight %d\n", d3d->minTexHeight);
-    fprintf(out, "maxTexHeight %d\n", d3d->maxTexHeight);
-    fprintf(out, "canTexModulate %d\n", d3d->canTexModulate);
-    fprintf(out, "canTexSelectArg1 %d\n", d3d->canTexSelectArg1);
-    fprintf(out, "canTexAdd %d\n", d3d->canTexAdd);
-    fprintf(out, "canDither %d\n", d3d->canDither);
-    fprintf(out, "canZCmpLess %d\n", d3d->canZCmpLess);
-    fprintf(out, "canZCmpLessEqual %d\n", d3d->canZCmpLessEqual);
-    fprintf(out, "canSrcBlendSrcAlpha %d\n", d3d->canSrcBlendSrcAlpha);
-    fprintf(out, "canSrcBlendOne %d\n", d3d->canSrcBlendOne);
-    fprintf(out, "canSrcBlendZero %d\n", d3d->canSrcBlendZero);
-    fprintf(out, "canDestBlendInvSrcAlpha %d\n", d3d->canDestBlendInvSrcAlpha);
-    fprintf(out, "canDestBlendOne %d\n", d3d->canDestBlendOne);
-    fprintf(out, "canDestBlendZero %d\n", d3d->canDestBlendZero);
-    fprintf(out, "canAlphaTestGreater %d\n", d3d->canAlphaTestGreater);
-    fprintf(out, "canAlphaTestLess %d\n", d3d->canAlphaTestLess);
-    fprintf(out, "squareOnly %d\n", d3d->squareOnly);
-    fprintf(out, "canFilterLinear %d\n", d3d->canFilterLinear);
-    fprintf(out, "canFilterNearest %d\n", d3d->canFilterNearest);
-    fprintf(out, "canClamp %d\n", d3d->canClamp);
-    fprintf(out, "canWrap %d\n", d3d->canWrap);
-
-    fclose(out);
+    spdlog::info("canRenderWindowed {}", d3d->canRenderWindowed);
+    spdlog::info("canGammaControl {}", d3d->canGammaControl);
+    spdlog::info("maxTexAspect {}", d3d->maxTexAspect);
+    spdlog::info("minTexWidth {}", d3d->minTexWidth);
+    spdlog::info("maxTexWidth {}", d3d->maxTexWidth);
+    spdlog::info("minTexHeight {}", d3d->minTexHeight);
+    spdlog::info("maxTexHeight {}", d3d->maxTexHeight);
+    spdlog::info("canTexModulate {}", d3d->canTexModulate);
+    spdlog::info("canTexSelectArg1 {}", d3d->canTexSelectArg1);
+    spdlog::info("canTexAdd {}", d3d->canTexAdd);
+    spdlog::info("canZCmpLess {}", d3d->canZCmpLess);
+    spdlog::info("canZCmpLessEqual {}", d3d->canZCmpLessEqual);
+    spdlog::info("canSrcBlendSrcAlpha {}", d3d->canSrcBlendSrcAlpha);
+    spdlog::info("canSrcBlendOne {}", d3d->canSrcBlendOne);
+    spdlog::info("canSrcBlendZero {}", d3d->canSrcBlendZero);
+    spdlog::info("canDestBlendInvSrcAlpha {}", d3d->canDestBlendInvSrcAlpha);
+    spdlog::info("canDestBlendOne {}", d3d->canDestBlendOne);
+    spdlog::info("canDestBlendZero {}", d3d->canDestBlendZero);
+    spdlog::info("canAlphaTestGreater {}", d3d->canAlphaTestGreater);
+    spdlog::info("canAlphaTestLess {}", d3d->canAlphaTestLess);
+    spdlog::info("squareOnly {}", d3d->squareOnly);
+    spdlog::info("canFilterLinear {}", d3d->canFilterLinear);
+    spdlog::info("canFilterNearest {}", d3d->canFilterNearest);
+    spdlog::info("canClamp {}", d3d->canClamp);
+    spdlog::info("canWrap {}", d3d->canWrap);
 }
-#endif
 
 GLboolean init_d3d(d3d_context* d3d)
 {
@@ -161,6 +151,7 @@ GLboolean init_d3d(d3d_context* d3d)
 
     if (!init_depthbuffer(d3d))
     {
+        errLog("init_depthbuffer(CreateDevice)", hr);
         return GL_FALSE;
     }
 
@@ -255,9 +246,7 @@ GLboolean init_d3d(d3d_context* d3d)
         d3d->canAlphaTest = GL_FALSE;
     }
 
-#if LOG_DEVICE_CAPS
     log_device_caps(d3d);
-#endif
 
     d3d->d3dDevice->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &d3d->BackSurface);
 
@@ -320,16 +309,7 @@ GLboolean initialize_directx(GLcontext* ctx)
 
     d3d->Fullscreen = rglGetFullscreen();
 
-    if (!init_window(d3d))
-    {
-        d3d_shutdown(ctx);
-        return GL_FALSE;
-    }
-
-    GetClientRect(d3d->hwnd, &d3d->ScreenRect);
-    GetClientRect(d3d->hwnd, &d3d->ViewportRect);
-    ClientToScreen(d3d->hwnd, (POINT*)&d3d->ScreenRect.left);
-    ClientToScreen(d3d->hwnd, (POINT*)&d3d->ScreenRect.right);
+    init_window(d3d);
 
     if (!init_d3d(d3d))
     {
@@ -363,30 +343,30 @@ void d3d_shutdown(GLcontext* ctx)
         d3d->d3dDevice->SetGammaRamp(0, D3DSGR_CALIBRATE, &d3d->awOldLUT);
     }
 
+#if _DEBUG
+#define ReleaseAndVerify(x) \
+    refCount = x.Reset(); \
+	if (refCount != 0) \
+	{ \
+		spdlog::error("Releasing " #x " failed: {} refs remaining", refCount); \
+        __debugbreak(); \
+	}
+#else
+#define ReleaseAndVerify(x) \
+    refCount = x.Reset(); \
+	if (refCount != 0) \
+	{ \
+		spdlog::error("Releasing " #x " failed: {} refs remaining", refCount); \
+	}
+#endif
 
-    unsigned long refCount = d3d->DepthSurface.Reset();
-    assert(refCount == 0);
+    unsigned long refCount;
+    ReleaseAndVerify(d3d->DepthSurface);
+    ReleaseAndVerify(d3d->BackSurface);
+    ReleaseAndVerify(d3d->d3dDevice);
 
-    if (d3d->BackSurface != NULL)
-    {
-        LOG("releasing BackSurface ...");
-        refCount = d3d->BackSurface.Reset();
-        LOG(" released.\n");
 
-        assert(refCount == 0);
-    }
-
-    if (d3d->d3dDevice != NULL)
-    {
-        LOG("releasing d3dDevice ...");
-        refCount = d3d->d3dDevice.Reset();
-        assert(refCount == 0);
-        LOG(" released.\n");
-    }
-    if (d3d->d3dObject)
-    {
-        LOG("releasing d3dObject ...");
-        d3d->d3dObject.Reset();
-        LOG(" released.\n");
-    }
+    // ReleaseAndVerify(d3d->d3dObject);
+    // FIXME: One dangling ref here
+    d3d->d3dObject.Reset();
 }
