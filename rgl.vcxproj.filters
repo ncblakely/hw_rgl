@@ -10,6 +10,7 @@
     <ClCompile Include="wgl.c" />
     <ClCompile Include="rglext.c" />
     <ClCompile Include="hash.c" />
+    <ClCompile Include="pch.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="kgl.h" />
@@ -17,6 +18,7 @@
     <ClInclude Include="kvb.h" />
     <ClInclude Include="rglext.h" />
     <ClInclude Include="hash.h" />
+    <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="draw.def" />

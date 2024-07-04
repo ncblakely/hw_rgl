@@ -108,8 +108,9 @@ typedef unsigned int GLenum;
 
 #define MAX_LIGHTS		3
 
-#define MAX_WIDTH		1600
-#define MAX_HEIGHT		1200
+// TODO: Remove and dynamically allocate arrays instead of hardcoding
+#define MAX_WIDTH		3840
+#define MAX_HEIGHT		2160
 
 #define MAX_MODELVIEW_STACK_DEPTH	16
 #define MAX_PROJECTION_STACK_DEPTH	8
