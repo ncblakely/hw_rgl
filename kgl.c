@@ -72,9 +72,9 @@ GLubyte STR_EXTENSIONS[] = "xxxxxxxx GL_RGL_rgl_feature GL_EXT_rescale_normal GL
 GLubyte STR_EXTENSIONS[] = "xxxxxxxx GL_RGL_rgl_feature GL_EXT_rescale_normal GL_EXT_paletted_texture GL_EXT_shared_texture_palette GL_RGL_lit_texture_palette";
 #endif
 
-GLubyte STR_VENDOR[]     = "Relic Entertainment, Inc. [1.1a]";
+GLubyte STR_VENDOR[]     = "Relic Entertainment, Inc. [1.3a]";
 GLubyte STR_RENDERER[]   = "rgl   ";    //3 spaces
-GLubyte STR_VERSION[]    = "1.1   ";    //3 spaces
+GLubyte STR_VERSION[]    = "1.3   ";    //3 spaces
 GLubyte STR_NOTHING[]    = "[unrecognized string]";
 
 //**THE CONTEXT**  (the only context)
