@@ -674,6 +674,7 @@ DLL int  rauxInitPosition(GLuint x, GLuint y, GLuint width, GLuint height, GLuin
 
 #define RGL_D3D_SHUFFLE     0x4630
 #define RGL_D3D_FULLSCENE   0x4631
+#define RGL_D3D_D3D9        0x4632 // Driver supports D3D9 features
 
 #define RGL_SKIP_RASTER     0x4640
 #define RGL_NOSKIP_RASTER   0x4641
