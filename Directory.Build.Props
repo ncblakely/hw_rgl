@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+		<SourceRoot>$(MSBuildThisFileDirectory)</SourceRoot> <!-- The root path of the source tree. -->
+		
+		<!-- Uncomment to enable address sanitizer for all projects. -->
+        <!--<EnableASAN>true</EnableASAN> -->
+       
+        <VcpkgAdditionalInstallOptions Condition="'$(EnableASAN)' == 'true' AND '$(VcpkgEnabled)' != 'false'">$(VcPkgAdditionalInstallOptions) --overlay-triplets=$(SourceRoot)\custom-triplets</VcpkgAdditionalInstallOptions>
+	</PropertyGroup>
+	<Choose>
+		<When Condition="'$(EnableASAN)' == 'true' AND '$(VcpkgEnabled)' != 'false'">
+			<PropertyGroup>
+				<VcpkgTriplet>x86-windows-asan</VcpkgTriplet>
+			</PropertyGroup>
+		</When>
+		<Otherwise>
+			<PropertyGroup>
+				<VcpkgTriplet>x86-windows-static</VcpkgTriplet>
+			</PropertyGroup>
+		</Otherwise>
+	</Choose>
+    
+    <ItemDefinitionGroup>
+        <ClCompile>
+            <LanguageStandard>stdcpp20</LanguageStandard>
+            <MultiProcessorCompilation>true</MultiProcessorCompilation>
+            <RuntimeTypeInfo>false</RuntimeTypeInfo>
+            <WarningLevel>Level3</WarningLevel>
+            <!-- <TreatWarningAsError>true</TreatWarningAsError> -->
+        </ClCompile>
+    </ItemDefinitionGroup>
+</Project>

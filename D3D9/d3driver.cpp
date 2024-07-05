@@ -17,6 +17,8 @@
 #include "d3dtex.h"
 #include "d3dblt.h"
 
+#include "Logger.h"
+
 #define DR DriverFuncs
 
 #define SETUP setupFunc
@@ -83,6 +85,8 @@ typedef struct xyzw_t
 } xyzw_t;
 
 #define MAX_VERTS VB_SIZE
+
+constexpr const char* LOG_FILE_NAME = "rgld3d9.log";
 
 static xyzw_c   d3dVert[MAX_VERTS];
 static xyzw_c_t d3dVertct[MAX_VERTS];
@@ -176,24 +180,7 @@ const char* d3d_map_error(HRESULT hr)
 
 void errLogFn(const char* s, HRESULT hr)
 {
-    FILE* out;
-    const char* e;
-
-    if (hr == D3D_OK)
-    {
-        out = fopen("d3d.err", "wt");
-    }
-    else
-    {
-        out = fopen("d3d.err", "at");
-    }
-    if (out == NULL)
-    {
-        return;
-    }
-    e = d3d_map_error(hr);
-    fprintf(out, "%s [%s]\n", s, e);
-    fclose(out);
+    spdlog::error("{} [{}]", s, d3d_map_error(hr));
 }
 
 void errLogNull(const char* s, HRESULT hr)
@@ -1857,6 +1844,7 @@ static void draw_pixels(
 ----------------------------------------------------------------------------*/
 static void shutdown_driver(GLcontext* ctx)
 {
+    spdlog::info("Shutting down D3D9...");
     d3d_free_all_textures(ctx);
     d3d_shutdown(ctx);
 
@@ -1865,6 +1853,8 @@ static void shutdown_driver(GLcontext* ctx)
         delete ctx->DriverCtx;
         ctx->DriverCtx = NULL;
     }
+
+    spdlog::info("Shutdown complete.");
 }
 
 /*-----------------------------------------------------------------------------
@@ -2193,6 +2183,10 @@ extern "C" DLL GLboolean init_driver(GLcontext* ctx)
 {
     CTX = ctx;
 
+    InitLogger(LOG_FILE_NAME);
+
+    spdlog::info("Initializing D3D9 driver");
+
     /* setup function pointers for the GL */
     ctx->DR.init_driver = (BoolFunc)init_driver;
     ctx->DR.post_init_driver = (BoolFunc)post_init_driver;
@@ -2304,6 +2298,7 @@ extern "C" DLL GLboolean init_driver(GLcontext* ctx)
 
     if (!initialize_directx(ctx))
     {
+        spdlog::error("Failed to initialize Direct3D 9");
         d3d_shutdown(ctx);
         return GL_FALSE;
     }

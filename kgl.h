@@ -108,8 +108,9 @@ typedef unsigned int GLenum;
 
 #define MAX_LIGHTS		3
 
-#define MAX_WIDTH		1600
-#define MAX_HEIGHT		1200
+// TODO: Remove and dynamically allocate arrays instead of hardcoding
+#define MAX_WIDTH		3840
+#define MAX_HEIGHT		2160
 
 #define MAX_MODELVIEW_STACK_DEPTH	16
 #define MAX_PROJECTION_STACK_DEPTH	8
@@ -674,6 +675,7 @@ DLL int  rauxInitPosition(GLuint x, GLuint y, GLuint width, GLuint height, GLuin
 
 #define RGL_D3D_SHUFFLE     0x4630
 #define RGL_D3D_FULLSCENE   0x4631
+#define RGL_D3D_D3D9        0x4632 // Driver supports D3D9 features
 
 #define RGL_SKIP_RASTER     0x4640
 #define RGL_NOSKIP_RASTER   0x4641
