@@ -19,6 +19,8 @@ GLboolean d3d_blt_RGBA16_4444(IDirect3DSurface9* surf, GLubyte* data, GLsizei wi
 GLboolean d3d_blt_RGBA16_8888(IDirect3DSurface9* surf, GLubyte* data, GLsizei width, GLsizei height);
 GLboolean d3d_blt_COLORINDEX(IDirect3DSurface9* surf, GLubyte* data, GLsizei width, GLsizei height);
 
+void d3d_draw_quad(GLint xOfs, GLint yOfs, GLsizei width, GLsizei height, ComPtr<IDirect3DTexture9> offscreenTexture);
+
 void d3d_draw_pixels_RGBA_generic(GLint xOfs, GLint yOfs, GLsizei width, GLsizei height, GLubyte* data);
 
 void d3d_draw_pixels_RGBA_pitched(GLint x0, GLint y0, GLint x1, GLint y1,

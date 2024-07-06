@@ -7,6 +7,7 @@
 =============================================================================*/
 
 #include "d3drv.h"
+#include "d3dblt.h"
 
 /*-----------------------------------------------------------------------------
     Name        : d3d_blt_COLORINDEX
@@ -578,209 +579,107 @@ GLboolean d3d_blt_RGBA16_8888(
     return GL_TRUE;
 }
 
+void d3d_draw_quad(GLint xOfs, GLint yOfs, GLsizei width, GLsizei height, ComPtr<IDirect3DTexture9> offscreenTexture)
+{
+    struct Vertex
+    {
+        float x, y, z, rhw;
+        float u, v;
+    };
+
+    Vertex vertices[] =
+    {
+        {(float)xOfs, (float)yOfs, 0.0f, 1.0f, 0.0f, 1.0f},
+        {(float)width + xOfs, (float)yOfs, 0.0f, 1.0f, 1.0f, 1.0f},
+        {(float)xOfs, (float)height + yOfs, 0.0f, 1.0f, 0.0f, 0.0f},
+        {(float)width + xOfs, (float)height + yOfs, 0.0f, 1.0f, 1.0f, 0.0f}
+    };
+
+    HRESULT hr;
+    CheckHresult(D3D->d3dDevice->SetFVF(D3DFVF_XYZRHW | D3DFVF_TEX1));
+    CheckHresult(D3D->d3dDevice->SetTexture(0, offscreenTexture.Get()));
+
+    D3D->d3dDevice->SetRenderState(D3DRS_LIGHTING, FALSE);
+    D3D->d3dDevice->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
+    D3D->d3dDevice->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
+    D3D->d3dDevice->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
+    D3D->d3dDevice->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_MODULATE);
+
+    D3D->d3dDevice->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
+
+    CheckHresult(D3D->d3dDevice->DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, vertices, sizeof(Vertex)));
+    CheckHresult(D3D->d3dDevice->SetTexture(0, nullptr));
+
+    D3D->d3dDevice->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_DISABLE);
+}
+
 void d3d_draw_pixels_RGBA_generic(
     GLint xOfs, GLint yOfs, GLsizei width, GLsizei height, GLubyte* data)
 {
     RETrackFunction();
 
-    GLint i, bytesPerPixel, sPos, dPos;
-    GLint dColor[4], sColor[4];
-    GLint dColorBits[4];
-    GLint dColorShift[4];
-    GLushort* dShort;
-    GLuint* dLong;
-    GLubyte* sp;
+    constexpr int BytesPerPixel = 4;
 
-    BYTE* psurfBase;
-    GLint x, y, pitch;
-    GLint ymax;
-
-    HRESULT hr;
-    D3DSURFACE_DESC ddsd;
-    D3DFORMAT ddpf;
-
-    GLboolean blended, reversed;
-
-    ymax = CTX->Buffer.Height - 1;
-
-    if (xOfs < 0 && yOfs < 0)
+    assert(xOfs >= 0 && yOfs >= 0);
+    if (xOfs < 0 || yOfs < 0)
     {
-        reversed = TRUE;
-        xOfs = -xOfs;
-        yOfs = -yOfs;
-    }
-    else
-    {
-        reversed = FALSE;
-    }
-
-    D3DLOCKED_RECT lockedRect;
-    hr = D3D->BackSurface->LockRect(&lockedRect, nullptr, D3DLOCK_NOSYSLOCK);
-    if (FAILED(hr))
-    {
-        errLog("d3d_draw_pixels_RGBA_generic: LockRect failed", hr);
         return;
     }
 
-    hr = D3D->BackSurface->GetDesc(&ddsd);
-    if (FAILED(hr))
-	{
-        errLog("d3d_draw_pixels_RGBA_generic: GetDesc failed", hr);
-		return;
-	}
+    GLuint ymax = CTX->Buffer.Height - 1;
 
-    ddpf = ddsd.Format;
-    psurfBase = (BYTE*)lockedRect.pBits;
-    pitch = lockedRect.Pitch;
+    ComPtr<IDirect3DSurface9> offscreenSurface;
+    D3D->d3dDevice->CreateOffscreenPlainSurface(width, height, D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM, offscreenSurface.GetAddressOf(), nullptr);
 
-    if (CTX->Blend || CTX->AlphaTest)
+    HRESULT hr;
+
+    D3DLOCKED_RECT lockedRect;
+    CheckHresult(offscreenSurface->LockRect(&lockedRect, nullptr, D3DLOCK_NOSYSLOCK | D3DLOCK_DISCARD));
+
+    BYTE* psurfBase = (BYTE*)lockedRect.pBits;
+    int pitch = lockedRect.Pitch;
+
+    yOfs = ymax - yOfs - height;
+    GLboolean blended = (CTX->Blend || CTX->AlphaTest) != GL_FALSE;
+
+    for (GLint y = 0; y < height; y++)
     {
-        blended = GL_TRUE;
-    }
-    else
-    {
-        blended = GL_FALSE;
-    }
+        auto sPos = BytesPerPixel * width * y;
+        auto sp = data + sPos;
 
-    bytesPerPixel = d3d_format_bit_count(ddpf) >> 3;
+        GLuint* dLong = (GLuint*)(psurfBase + y * pitch);
 
-    d3d_blt_setup(ddpf, dColorBits, dColorShift);
-
-    for (y = 0; y < height; y++)
-    {
-        if (reversed)
+        if (!blended)
         {
-            dPos = pitch * (y + yOfs);
+            for (GLsizei x = 0; x < width; x++)
+            {
+                dLong[x] = RGBA_MAKE(sp[BytesPerPixel * x + 0], sp[BytesPerPixel * x + 1], sp[BytesPerPixel * x + 2], 255);
+            }
         }
         else
         {
-            dPos = pitch * (ymax - (y + yOfs));
-        }
-        dPos += bytesPerPixel * xOfs;
-        sPos = 4 * width * y;
-        sp = data + sPos;
-
-        if (dColorBits[0] == 8 && dColorBits[1] == 8 && dColorBits[2] == 8 && bytesPerPixel == 4)
-        {
-            //special-case 32bit
-            dLong = (GLuint*)(psurfBase + dPos);
-            if (!blended)
+            for (GLsizei x = 0; x < width; x++)
             {
-                for (x = 0; x < width; x++)
+                if (sp[4 * x + 3] != 0)
                 {
-                    dLong[x] = RGBA_MAKE(sp[4*x + 0], sp[4*x + 1], sp[4*x + 2], 255);
-                }
-            }
-            else
-            {
-                for (x = 0; x < width; x++)
-                {
-                    if (sp[4*x + 3] != 0)
-                    {
-                        dLong[x] = RGBA_MAKE(sp[4*x + 0], sp[4*x + 1], sp[4*x + 2], 255);
-                    }
-                }
-            }
-            dPos += bytesPerPixel * width;
-        }
-        else if (dColorBits[0] == 5 && dColorBits[1] == 6 && dColorBits[2] == 5 && bytesPerPixel == 2)
-        {
-            //special-case 16bit (565)
-            dShort = (GLushort*)(psurfBase + dPos);
-            if (!blended)
-            {
-                for (x = 0; x < width; x++)
-                {
-                    dShort[x] = FORM_RGB565(sp[4*x + 0], sp[4*x + 1], sp[4*x + 2]);
-                }
-            }
-            else
-            {
-                for (x = 0; x < width; x++)
-                {
-                    if (sp[4*x + 3] != 0)
-                    {
-                        dShort[x] = FORM_RGB565(sp[4*x + 0], sp[4*x + 1], sp[4*x + 2]);
-                    }
-                }
-            }
-            dPos += bytesPerPixel * width;
-        }
-        else if (dColorBits[0] == 5 && dColorBits[1] == 5 && dColorBits[2] == 5 && bytesPerPixel == 2)
-        {
-            //special-case 16bit (555)
-            dShort = (GLushort*)(psurfBase + dPos);
-            if (!blended)
-            {
-                for (x = 0; x < width; x++)
-                {
-                    dShort[x] = FORM_RGB555(sp[4*x + 0], sp[4*x + 1], sp[4*x + 2]);
-                }
-            }
-            else
-            {
-                for (x = 0; x < width; x++)
-                {
-                    if (sp[4*x + 3] != 0)
-                    {
-                        dShort[x] = FORM_RGB555(sp[4*x + 0], sp[4*x + 1], sp[4*x + 2]);
-                    }
-                }
-            }
-            dPos += bytesPerPixel * width;
-        }
-        else
-        {
-            for (x = 0; x < width; x++, dPos += bytesPerPixel, sPos += 4)
-            {
-                for (i = 0; i < 4; i++)
-                {
-                    sColor[i] = data[sPos + i];
-                }
-
-                if (blended && sColor[3] == 0)
-                {
-                    continue;
-                }
-
-                for (i = 0; i < 4; i++)
-                {
-                    if (dColorBits[i] == 8)
-                    {
-                        dColor[i] = sColor[i];
-                    }
-                    else if (dColorBits[i] < 8)
-                    {
-                        dColor[i] = sColor[i] >> (8 - dColorBits[i]);
-                    }
-                    else
-                    {
-                        dColor[i] = sColor[i] << (dColorBits[i] - 8);
-                    }
-                }
-
-                switch (bytesPerPixel)
-                {
-                case 2:
-                    dShort = (GLushort*)(psurfBase + dPos);
-                    *dShort = (dColor[0] << dColorShift[0]) | (dColor[1] << dColorShift[1])
-                        | (dColor[2] << dColorShift[2]) | (dColor[3] << dColorShift[3]);
-                    break;
-
-                case 4:
-                    dLong = (GLuint*)(psurfBase + dPos);
-                    *dLong = (dColor[0] << dColorShift[0]) | (dColor[1] << dColorShift[1])
-                        | (dColor[2] << dColorShift[2]) | (dColor[3] << dColorShift[3]);
-                    break;
-
-                default:
-                    ;//FIXME: do something about this error
+                    dLong[x] = RGBA_MAKE(sp[BytesPerPixel * x + 0], sp[BytesPerPixel * x + 1], sp[BytesPerPixel * x + 2], 255);
                 }
             }
         }
     }
 
-    D3D->BackSurface->UnlockRect();
+    CheckHresult(offscreenSurface->UnlockRect());
+
+    // Create a texture from the offscreen surface and copy the surface's data to it
+    ComPtr<IDirect3DTexture9> offscreenTexture;
+    CheckHresult(D3D->d3dDevice->CreateTexture(width, height, 1, D3DUSAGE_DYNAMIC, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, offscreenTexture.GetAddressOf(), nullptr));
+
+    ComPtr<IDirect3DSurface9> pTextureSurface = nullptr;
+    CheckHresult(offscreenTexture->GetSurfaceLevel(0, pTextureSurface.GetAddressOf()));
+    CheckHresult(D3D->d3dDevice->UpdateSurface(offscreenSurface.Get(), nullptr, pTextureSurface.Get(), nullptr));
+
+    // Draw the texture
+    d3d_draw_quad(xOfs, yOfs, width, height, offscreenTexture);
 }
 
 /*-----------------------------------------------------------------------------
