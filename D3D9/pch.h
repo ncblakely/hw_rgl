@@ -15,3 +15,33 @@ using ComPtr = Microsoft::WRL::ComPtr<T>;
 
 #define ASSERT_UNTESTED() assert(false && "Untested code path")
 #define ASSERT_UNIMPLEMENTED() assert(false && "Feature unimplemented")
+
+#define CheckHresult(expr) \
+	{ \
+		HRESULT _hr = expr; \
+		if (FAILED(_hr)) \
+		{ \
+			spdlog::error("Error: {} failed with error code {}", #expr, _hr); \
+			return; \
+		} \
+	}
+
+#define CheckHresultReturn(expr) \
+	{ \
+		HRESULT _hr = expr; \
+		if (FAILED(_hr)) \
+		{ \
+			spdlog::error("Error: {} failed with error code {}", #expr, _hr); \
+			return _hr; \
+		} \
+	}
+
+#define CheckHresultReturnBool(expr) \
+	{ \
+		HRESULT _hr = expr; \
+		if (FAILED(_hr)) \
+		{ \
+			spdlog::error("Error: {} failed with error code {}", #expr, _hr); \
+			return GL_FALSE; \
+		} \
+	}

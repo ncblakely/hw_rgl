@@ -16,14 +16,11 @@ Select the Direct3D renderer in the options menu.
 
 ## Features
 - Upgrades the original Direct3D7-based renderer to Direct3D9, offering improved compatibility and performance.
+- Adds support for resolutions up to 4K.
+- Fixes slowdown when displaying certain UIs (options, build manager, etc).
+- Fixes Z-fighting artifacts on distant ships.
 
 ## Known Issues
-
-Many of the limitations of the original D3D7 renderer are still present, including:
-    - Dithering/banding artifacts in backgrounds and other textures.
-    - Slowdown in construction and research menus.
-
-These will be fixed over time.
 
 ## Contributing
 

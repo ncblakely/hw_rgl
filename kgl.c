@@ -4899,15 +4899,8 @@ DLL int rglFeature(unsigned int feature)
         break;
     case RGL_BROKEN_MIXED_DEPTHTEST:
     case RGL_COLOROP_ADD:
-        if (ctx->DriverFuncs.feature_exists != NULL)
-        {
-            return ctx->DriverFuncs.feature_exists(feature);
-        }
-        else
-        {
-            return GL_FALSE;
-        }
     case RGL_D3D_FULLSCENE:
+    case RGL_D3D_D3D9:
         if (ctx->DriverFuncs.feature_exists != NULL)
         {
             return ctx->DriverFuncs.feature_exists(feature);
