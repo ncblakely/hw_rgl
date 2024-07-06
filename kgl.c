@@ -4901,7 +4901,6 @@ DLL int rglFeature(unsigned int feature)
     case RGL_COLOROP_ADD:
     case RGL_D3D_FULLSCENE:
     case RGL_D3D_D3D9:
-    case GL_SHARED_TEXTURE_PALETTE_EXT:
         if (ctx->DriverFuncs.feature_exists != NULL)
         {
             return ctx->DriverFuncs.feature_exists(feature);
@@ -4909,6 +4908,15 @@ DLL int rglFeature(unsigned int feature)
         else
         {
             return GL_FALSE;
+        }
+    case GL_SHARED_TEXTURE_PALETTE_EXT:
+        if (ctx->DriverFuncs.feature_exists != NULL)
+        {
+            return ctx->DriverFuncs.feature_exists(feature);
+        }
+        else
+        {
+            return GL_TRUE;
         }
     default:
         gl_problem(ctx, "rglFeature(feature)");
@@ -5821,8 +5829,6 @@ DLL void API glDrawPixels(
 
     if (ctx->DriverFuncs.draw_pixels != NULL)
     {
-        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-
         if (ctx->NewMask & NEW_RASTER)
         {
             gl_update_raster(ctx);

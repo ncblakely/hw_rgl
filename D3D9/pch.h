@@ -17,25 +17,31 @@ using ComPtr = Microsoft::WRL::ComPtr<T>;
 #define ASSERT_UNIMPLEMENTED() assert(false && "Feature unimplemented")
 
 #define CheckHresult(expr) \
-	hr = expr; \
-	if (FAILED(hr)) \
 	{ \
-		spdlog::error("Error: {} failed with error code {}", #expr, hr); \
-		return; \
+		HRESULT _hr = expr; \
+		if (FAILED(_hr)) \
+		{ \
+			spdlog::error("Error: {} failed with error code {}", #expr, _hr); \
+			return; \
+		} \
 	}
 
 #define CheckHresultReturn(expr) \
-	hr = expr; \
-	if (FAILED(hr)) \
 	{ \
-		spdlog::error("Error: {} failed with error code {}", #expr, hr); \
-		return hr; \
+		HRESULT _hr = expr; \
+		if (FAILED(_hr)) \
+		{ \
+			spdlog::error("Error: {} failed with error code {}", #expr, _hr); \
+			return _hr; \
+		} \
 	}
 
 #define CheckHresultReturnBool(expr) \
-	hr = expr; \
-	if (FAILED(hr)) \
 	{ \
-		spdlog::error("Error: {} failed with error code {}", #expr, hr); \
-		return GL_FALSE; \
+		HRESULT _hr = expr; \
+		if (FAILED(_hr)) \
+		{ \
+			spdlog::error("Error: {} failed with error code {}", #expr, _hr); \
+			return GL_FALSE; \
+		} \
 	}

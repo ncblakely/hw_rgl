@@ -129,7 +129,6 @@ GLboolean init_d3d(d3d_context* d3d)
     d3dpp.PresentationInterval = D3DPRESENT_INTERVAL_IMMEDIATE; // TODO D3D9: Configurable vsync
     d3dpp.AutoDepthStencilFormat = D3DFMT_D24X8;
     d3dpp.EnableAutoDepthStencil = TRUE;
-    d3dpp.Flags = D3DPRESENTFLAG_LOCKABLE_BACKBUFFER; // TODO: This is not ideal for performance in D3D9, but draw_pixels needs it
 
     // TODO D3D9: Support multiple adapters
     hr = d3d->d3dObject->CreateDevice(
@@ -164,6 +163,13 @@ GLboolean init_d3d(d3d_context* d3d)
     d3d->minTexHeight = MAX_P2(0);
     d3d->maxTexWidth  = MIN_P2(caps.MaxTextureWidth);
     d3d->maxTexHeight = MIN_P2(caps.MaxTextureHeight);
+
+    if (caps.TextureCaps & D3DPTEXTURECAPS_POW2)
+	{
+        // TODO: If we need to support this, draw_quad needs to be changed to pad up to nearest power of 2
+        spdlog::error("Non-power of 2 texture support is required");
+        return GL_FALSE;
+	}
 
     //depthbuffer comparison
     d3d->canZCmpLess = caps.ZCmpCaps & D3DPCMPCAPS_LESS; 
