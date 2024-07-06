@@ -2164,6 +2164,8 @@ static int feature_exists(GLint feature)
         return (D3D->canTexAdd);
     case RGL_D3D_FULLSCENE:
         return D3D->canAntialiasTriIndep;
+    case RGL_D3D_D3D9:
+        return GL_TRUE;
     default:
         return GL_FALSE;
     }
