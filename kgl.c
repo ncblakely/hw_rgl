@@ -146,6 +146,7 @@ static void gl_Vertex4fv_c(GLfloat const*);
 #define GET_SCRATCH(CTX) (CTX->DriverFuncs.get_scratch != NULL) ? CTX->DriverFuncs.get_scratch(CTX) : NULL
 
 void gl_shutdown(void);
+DLL void gl_Enable(GLenum cap, GLboolean state);
 
 DLL GLboolean rglGetFullscreen(void) { return IsFullscreen; }
 DLL GLboolean rglGetTruecolor(void) { return IsTruecolor; }
@@ -1221,9 +1222,8 @@ DLL void API glPopMatrix()
 
 /*-----------------------------------------------------------------------------
     Name        : glPushAttrib
-    Description : a very limited implementation of the spec, but point / line
-                  sizes are saved
-    Inputs      : attrib - GL_POINT_BIT or GL_LINE_BIT
+    Description : saves a small subset of attrib state used by the game
+    Inputs      : attrib - GL_POINT_BIT, GL_LINE_BIT, GL_BLEND, or GL_LIGHTING
     Outputs     :
     Return      :
 ----------------------------------------------------------------------------*/
@@ -1241,13 +1241,26 @@ DLL void API glPushAttrib(GLenum attrib)
     {
     case GL_POINT_BIT:
         ctx->AttribStack[ctx->AttribStackDepth].type = GL_POINT_BIT;
-        ctx->AttribStack[ctx->AttribStackDepth].val.fvalue = ctx->PointSize;
+        ctx->AttribStack[ctx->AttribStackDepth].fvalue = ctx->PointSize;
         break;
 
     case GL_LINE_BIT:
         ctx->AttribStack[ctx->AttribStackDepth].type = GL_LINE_BIT;
-        ctx->AttribStack[ctx->AttribStackDepth].val.fvalue = ctx->LineWidth;
+        ctx->AttribStack[ctx->AttribStackDepth].fvalue = ctx->LineWidth;
         break;
+
+    case GL_BLEND:
+        ctx->AttribStack[ctx->AttribStackDepth].type = GL_BLEND;
+        ctx->AttribStack[ctx->AttribStackDepth].enabled = ctx->Blend;
+        ctx->AttribStack[ctx->AttribStackDepth].srcFactor = ctx->BlendSrc;
+        ctx->AttribStack[ctx->AttribStackDepth].dstFactor = ctx->BlendDst;
+        break;
+
+    case GL_LIGHTING:
+        ctx->AttribStack[ctx->AttribStackDepth].type = GL_LIGHTING;
+        ctx->AttribStack[ctx->AttribStackDepth].enabled = ctx->Lighting;
+        break;
+
     default:
         return;
     }
@@ -1257,10 +1270,9 @@ DLL void API glPushAttrib(GLenum attrib)
 
 /*-----------------------------------------------------------------------------
     Name        : glPopAttrib
-    Description : a very limited implementation of the spec, but point / line
-                  sizes are restored
+    Description : restores a small subset of attrib state used by the game
     Inputs      :
-    Outputs     : the POINT or LINE state may be updated
+    Outputs     : the saved state may be updated
     Return      :
     State       : NEW_RASTER
 ----------------------------------------------------------------------------*/
@@ -1278,11 +1290,26 @@ DLL void API glPopAttrib()
     switch (ctx->AttribStack[ctx->AttribStackDepth].type)
     {
     case GL_POINT_BIT:
-        ctx->PointSize = ctx->AttribStack[ctx->AttribStackDepth].val.fvalue;
+        ctx->PointSize = ctx->AttribStack[ctx->AttribStackDepth].fvalue;
         break;
 
     case GL_LINE_BIT:
-        ctx->LineWidth = ctx->AttribStack[ctx->AttribStackDepth].val.fvalue;
+        ctx->LineWidth = ctx->AttribStack[ctx->AttribStackDepth].fvalue;
+        break;
+
+    case GL_BLEND:
+        gl_Enable(GL_BLEND, ctx->AttribStack[ctx->AttribStackDepth].enabled);
+        glBlendFunc(
+            ctx->AttribStack[ctx->AttribStackDepth].srcFactor,
+            ctx->AttribStack[ctx->AttribStackDepth].dstFactor);
+        return;
+
+    case GL_LIGHTING:
+        gl_Enable(GL_LIGHTING, ctx->AttribStack[ctx->AttribStackDepth].enabled);
+        return;
+
+    default:
+        return;
         break;
     }
 

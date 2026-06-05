@@ -237,11 +237,10 @@ typedef struct gl_current_s
 typedef struct gl_attrib_s
 {
     GLenum  type;
-    union
-    {
-        GLfloat fvalue;
-        GLint   ivalue;
-    } val;
+    GLfloat fvalue;
+    GLboolean enabled;
+    GLenum srcFactor;
+    GLenum dstFactor;
 } gl_attrib;
 
 typedef struct gl_driver_funcs_s
